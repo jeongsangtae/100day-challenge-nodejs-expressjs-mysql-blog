@@ -1,4 +1,5 @@
 const express = require("express");
+const { restart } = require("nodemon");
 
 const db = require("../data/database");
 
@@ -10,7 +11,7 @@ router.get("/", function (req, res) {
 
 router.get("/posts", async function (req, res) {
   const query = `
-  SELECT posts.*, authors.name AS author_name FROM posts INNER JOIN authors ON posts.author_id = authors.id
+    SELECT posts.*, authors.name AS author_name FROM posts INNER JOIN authors ON posts.author_id = authors.id
   `;
   const [posts] = await db.query(query);
   res.render("posts-list", { posts: posts });
@@ -37,9 +38,9 @@ router.post("/posts", async function (req, res) {
 
 router.get("/posts/:id", async function (req, res) {
   const query = `
-  SELECT posts.*, authors.name AS author_name, authors.email AS author_email FROM posts 
-  INNER JOIN authors ON posts.author_id = authors.id
-  WHERE posts.id = ?
+    SELECT posts.*, authors.name AS author_name, authors.email AS author_email FROM posts 
+    INNER JOIN authors ON posts.author_id = authors.id
+    WHERE posts.id = ?
   `;
   const [posts] = await db.query(query, [req.params.id]);
 
@@ -65,7 +66,7 @@ router.get("/posts/:id", async function (req, res) {
 
 router.get("/posts/:id/edit", async function (req, res) {
   const query = `
-  SELECT * FROM posts WHERE id = ?
+    SELECT * FROM posts WHERE id = ?
   `;
 
   const [posts] = await db.query(query, [req.params.id]);
@@ -75,6 +76,20 @@ router.get("/posts/:id/edit", async function (req, res) {
   }
 
   res.render("update-post", { post: posts[0] });
+});
+
+router.post("/posts/:id/edit", async function (req, res) {
+  const query = `
+    UPDATE posts SET title = ?, summary = ?, body = ?
+    WHERE id = ?
+  `;
+  await db.query(query, [
+    req.body.title,
+    req.body.summary,
+    req.body.content,
+    req.params.id,
+  ]);
+  res.redirect("/posts");
 });
 
 module.exports = router;
